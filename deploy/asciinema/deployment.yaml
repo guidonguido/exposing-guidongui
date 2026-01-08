@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: asciinema-server
+  labels:
+    app: asciinema-server
+  namespace: go-blog
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: asciinema-server
+  template:
+    metadata:
+      labels:
+        app: asciinema-server
+    spec:
+      containers:
+      - name: asciinema-server
+        image: ghcr.io/asciinema/asciinema-server:20251114
+        ports:
+        - containerPort: 4000
+          name: web
+        - containerPort: 4002
+          name: admin
+        env:
+          - name: SECRET_KEY_BASE
+            valueFrom:
+              secretKeyRef:
+                name: asciinema-secret-key-base
+                key: secret_key_base
+          - name: URL_HOST
+            value: "asciinema.guidongui.com"
+          - name: URL_PORT
+            value: "80"
+            # Connect to Postgres running in the same pod via localhost
+          - name: DATABASE_URL
+            value: "postgresql://postgres:postgres@localhost:5432/postgres"
+          - name: SIGNUP_DISABLED
+            value: "true"
+          - name: UPLOAD_AUTH_REQUIRED
+            value: "true"
+          - name: DEFAULT_RECORDING_VISIBILITY
+            value: "public"
+        volumeMounts:
+          - name: asciinema-data
+            mountPath: /var/lib/asciinema
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "300m"
+      - name: postgres
+        image: postgres:15
+        env:
+          # Unsecure credentials for demonstration purposes only
+          # Do NOT expose the database publicly with these settings
+          - name: POSTGRES_USER
+            value: "postgres"
+          - name: POSTGRES_PASSWORD
+            value: "postgres"
+          - name: POSTGRES_DB
+            value: "postgres"
+          - name: PGDATA
+            value: "/var/lib/postgresql/data/pgdata"
+        volumeMounts:
+          - name: postgres-data
+            mountPath: /var/lib/postgresql/data
+        ports:
+        - containerPort: 5432
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "300m"
+        livenessProbe:
+          exec:
+            command:
+              - pg_isready
+              - -U
+              - postgres
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      volumes:
+      - name: postgres-data
+        persistentVolumeClaim:
+          claimName: postgres-data
+      - name: asciinema-data
+        persistentVolumeClaim:
+          claimName: asciinema-data

@@ -1,0 +1,38 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: go-blog
+  namespace: go-blog
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  # Protected post route
+  - match: Host(`exposing.guidongui.com`) && PathPrefix(`/posts/0`)
+    kind: Rule
+    middlewares:
+      - name: authentik
+        namespace: traefik
+    priority: 15
+    services:
+    - name: go-blog
+      port: 80
+  # Authentik outpost callback route
+  - match: Host(`exposing.guidongui.com`) && PathPrefix(`/outpost.goauthentik.io/`)
+    kind: Rule
+    priority: 15
+    services:
+    - kind: Service
+      name: ak-outpost-authentik-embedded-outpost
+      namespace: authentik
+      port: 9000
+  # Public routes
+  - match: Host(`exposing.guidongui.com`)
+    kind: Rule
+    priority: 10
+    services:
+    - name: go-blog
+      port: 80
+  tls:
+    # secretName is the name of the secret containing the certificate
+    secretName: go-blog-certificate-secret

@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: go-blog
+  namespace: go-blog
+spec:
+  selector:
+    app: go-blog
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+      

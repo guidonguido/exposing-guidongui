@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Index - guidongui.com</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <link href="http://fonts.googleapis.com/css?family=Inconsolata" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="/styles/asciinema-player.css" />
+    <link rel="stylesheet" type="text/css" href="/styles/common.css" />
+
+</head>
+
+<body>
+    <div id="container">
+        <header>
+            <h1><a href="/">guidongui.com</a></h1>
+        </header>
+
+        <div id="content">
+            <!-- Portfolio Section with Asciinema -->
+            <section id="portfolio">
+                <div id="asciinema-player"></div>
+                <script src="/scripts/asciinema-player.min.js"></script>
+                <script>
+                    AsciinemaPlayer.create(
+                        'https://asciinema.guidongui.com/a/34.cast',
+                        document.getElementById('asciinema-player'),
+                        {
+                            autoPlay: true,
+                            loop: true,
+                            controls: false,
+                            theme: 'white',
+                            rows: 29,
+                            // fit: 'width',
+                            fit: false,
+                            terminalFontSize: '13px',
+                            terminalFontFamily: 'Inconsolata, monospace',
+                            terminalLineHeight: 1.4,
+                            speed: 1,
+                            loop: false
+                        }
+                    );
+                </script>
+            </section>
+
+            <!-- Posts Index Section -->
+            <section id="newslist">
+                <h2>Posts</h2>
+                {{range .Posts}}
+                <article data-post-id="{{.Title}}">
+                    <h3><a href="{{.URL}}">{{.Title}}</a></h3>
+                    <address>{{.Date}}</address>
+                    <div class="summary">
+                        <pre>{{.Summary}}</pre>
+                    </div>
+                    <div class="readmore">
+                        <i><a href="{{.URL}}">read more...</a></i>
+                    </div>
+                </article>
+                {{end}}
+            </section>
+        </div>
+    </div>
+</body>
+
+</html>

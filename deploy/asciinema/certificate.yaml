@@ -1,0 +1,13 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: asciinema-server-certificate
+  namespace: go-blog
+spec:
+  secretName: asciinema-server-certificate-secret
+  issuerRef:
+    name: cloudflare-clusterissuer
+    kind: ClusterIssuer
+  dnsNames:
+    - asciinema.guidongui.com
+    

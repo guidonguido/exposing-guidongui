@@ -1,0 +1,13 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: go-blog-certificate
+  namespace: go-blog
+spec:
+  secretName: go-blog-certificate-secret
+  issuerRef:
+    name: cloudflare-clusterissuer
+    kind: ClusterIssuer
+  dnsNames:
+    - exposing.guidongui.com
+    
