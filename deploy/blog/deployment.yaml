@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: go-blog
-        image: ghcr.io/guidonguido/go-blog:latest
+        image: ghcr.io/guidonguido/exposing-guidongui:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
