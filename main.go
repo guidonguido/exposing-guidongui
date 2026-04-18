@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"text/template"
+	"time"
 
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
@@ -16,9 +17,10 @@ func main() {
 	blogMux := http.NewServeMux()
 
 	// Serve static files
-	fs := http.FileServer(http.Dir("web/templates"))
-	blogMux.Handle("GET /scripts/", http.StripPrefix("/", fs))
-	blogMux.Handle("GET /styles/", http.StripPrefix("/", fs))
+	fs := http.FileServer(http.Dir("web"))
+	blogMux.Handle("GET /templates/scripts/", http.StripPrefix("/", fs))
+	blogMux.Handle("GET /templates/styles/", http.StripPrefix("/", fs))
+	blogMux.Handle("GET /posts/statics/", http.StripPrefix("/", fs))
 
 	blogMux.HandleFunc("GET /", HomepageHandler(internal.IndexReader{}))
 	blogMux.HandleFunc("GET /posts/{id}", PostHandler(internal.FileReader{}))
@@ -83,6 +85,10 @@ func PostHandler(rd internal.PostReader) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
+		// TRACE compute time
+		// Start evaluation time
+		renderTimeStart := time.Now()
+
 		if err != nil {
 			slog.Error("Template parsing error", "error", err)
 			http.Error(w,
@@ -127,8 +133,15 @@ func PostHandler(rd internal.PostReader) http.HandlerFunc {
 		// TODO: 4. Get Post view count
 		pd.ViewCount = 0
 
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+		// TRACE compute time
 		// 5. Render the template with PostData
-		err = tpl.Execute(w, pd)
+		// Empty buffer to fill with evaluated contet.
+		// This is for computing time trace only. The http ResponseWriter buffer
+		// is used for the http response instead
+		var out bytes.Buffer
+		err = tpl.Execute(&out, pd)
 		if err != nil {
 			slog.Error("Template execution error", "error", err)
 			http.Error(w,
@@ -136,7 +149,20 @@ func PostHandler(rd internal.PostReader) http.HandlerFunc {
 				http.StatusInternalServerError)
 			return
 		}
+		renderTime := time.Since(renderTimeStart)
 
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		// 6. Write to output buffer
+		nBytes, err := out.WriteTo(w)
+		if err != nil {
+			slog.Error("Write error", "error", err)
+			http.Error(w,
+				"Error: unable to write to output buffer.",
+				http.StatusInternalServerError)
+			return
+		}
+
+		slog.Info("Computing time info: ",
+			"render time", renderTime,
+			"# written bytes", nBytes)
 	}
 }
